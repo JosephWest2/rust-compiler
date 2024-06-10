@@ -28,9 +28,8 @@ fn main() {
         return;
     }
 
-    let lexer = lexer::Lexer::new()
-    let tokens = lexer::parse_string(&text);
-    dbg!(tokens);
-
+    let mut lexer = lexer::Lexer::new(&text);
+    let mut emitter = emitter::Emitter::new();
+    let mut parser = parser::Parser::new(&mut emitter, &mut lexer);
 
 }

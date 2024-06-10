@@ -2,13 +2,13 @@ pub trait Lex {
     fn next_token<'a>(&'a mut self) -> Token<'a>;
 }
 
-struct Lexer<'a> {
+pub struct Lexer<'a> {
     text: &'a str,
     cursor_index: usize,
 }
 
 #[derive(Debug)]
-enum TokenType {
+pub enum TokenType {
     Assign,
     Equals,
     Greater,
@@ -19,6 +19,7 @@ enum TokenType {
     Minus,
     Number,
     Ident,
+    String,
     Times,
     Divide,
     Newline,
@@ -39,8 +40,8 @@ enum TokenType {
 
 #[derive(Debug)]
 pub struct Token<'a> {
-    token_type: TokenType,
-    value: &'a str,
+    pub token_type: TokenType,
+    pub value: &'a str,
 }
 
 impl Lex for Lexer<'_> {
@@ -74,6 +75,12 @@ impl Lex for Lexer<'_> {
             while Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
                 Self::next_char(text, cursor_index);
                 let current_string = &text[slice_start..*cursor_index];
+                if current_string.chars().last().unwrap_or_else(|| '\0') == '"' && current_string.chars().next().unwrap_or_else(|| '\0') == '"' {
+                    return Token {
+                        token_type: TokenType::String,
+                        value: current_string,
+                    }
+                }
                 if current_string == "LET" {
                     if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
                         return Token {
@@ -265,25 +272,4 @@ impl Lexer<'_> {
         let mut chars = text_slice.chars();
         chars.next()
     }
-}
-
-pub fn new<'a>(file_text: &'a str) -> Box<dyn Lex> {
-    Box::new(Lexer {
-        text: file_text,
-        cursor_index: 0,
-    })
-}
-pub fn test() {
-    let test_string = "LET testvar = 155 + 299";
-    let mut lexer = Lexer::new(test_string);
-    let mut tokens = Vec::<Token>::new();
-
-    loop {
-        let token = lexer.next_token();
-        if matches!(token.token_type, TokenType::EOF) {
-            break;
-        }
-        tokens.push(token);
-    }
-    dbg!(tokens);
 }

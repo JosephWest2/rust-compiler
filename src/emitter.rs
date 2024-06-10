@@ -8,7 +8,7 @@ pub trait Emit {
     fn write_buffer_to_file(&self, file_name: &str) -> Result<(), Error>;
 }
 
-struct Emitter {
+pub struct Emitter {
     output_buffer: String,
 }
 
