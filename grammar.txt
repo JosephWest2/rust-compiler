@@ -1,0 +1,24 @@
+program ::= {statement}
+statement ::= "PRINT" (expression | string) nl
+    | "IF" comparison "THEN" nl {statement} "ENDIF" nl
+    | "WHILE" comparison "REPEAT" nl {statement} "ENDWHILE" nl
+    | "LABEL" ident nl
+    | "GOTO" ident nl
+    | "LET" ident "=" expression nl
+    | "INPUT" ident nl
+comparison ::= expression (("==" | "!=" | ">" | ">=" | "<" | "<=") expression)+
+expression ::= term {( "-" | "+" ) term}
+term ::= unary {( "/" | "*" ) unary}
+unary ::= ["+" | "-"] primary
+primary ::= number | ident
+nl ::= '\n'+
+
+
+
+----------------------
+
+{} means zero or more
+[] means zero or none
++ means one or more of what is to the left
+() is for grouping
+| is logical or

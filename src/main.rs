@@ -1,14 +1,16 @@
 use std::fs::File;
 use std::io::Read;
-use std::{env, process};
+use std::env;
 
+mod lexer;
 mod parser;
+mod emitter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         eprintln!("no file path provided");
-        process::exit(1);
+        return;
     }
 
     let file_path = &args[1];
@@ -18,15 +20,16 @@ fn main() {
 
     if file.is_err() {
         eprintln!("file {} not found", file_path);
-        process::exit(1);
+        return;
     }
     let res = file.unwrap().read_to_string(&mut text);
     if res.is_err() {
         eprintln!("unable to read file {}", file_path);
-        process::exit(1);
+        return;
     }
 
-    let tokens = parser::parse_string(&text);
+    let lexer = lexer::Lexer::new()
+    let tokens = lexer::parse_string(&text);
     dbg!(tokens);
 
 
