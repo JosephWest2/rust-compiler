@@ -1,16 +1,13 @@
-pub trait Lex {
-    fn next_token<'a>(&'a mut self) -> Token<'a>;
-}
-
 pub struct Lexer<'a> {
-    text: &'a str,
+    pub text: &'a str,
     cursor_index: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     Assign,
     Equals,
+    NotEqual,
     Greater,
     GreaterEqual,
     Less,
@@ -38,17 +35,34 @@ pub enum TokenType {
     INPUT,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Token<'a> {
     pub token_type: TokenType,
     pub value: &'a str,
 }
 
-impl Lex for Lexer<'_> {
-    fn next_token<'a>(&'a mut self) -> Token<'a> {
-        let cursor_index = &mut self.cursor_index;
-        let text = &self.text;
-        let mut current = match Self::next_char(text, cursor_index) {
+impl<'z> Lexer<'z> {
+    pub fn new(text: &'z str) -> Self {
+        Lexer {
+            text,
+            cursor_index: 0,
+        }
+    }
+    fn next_char(&mut self) -> Option<char> {
+        let text_slice = &self.text[self.cursor_index..];
+        let mut chars = text_slice.chars();
+        self.cursor_index += 1;
+        chars.next()
+    }
+
+    fn peek(&mut self) -> Option<char> {
+        let text_slice = &self.text[self.cursor_index..];
+        let mut chars = text_slice.chars();
+        chars.next()
+    }
+
+    pub fn next_token<'a>(&mut self, text: &'a str) -> Token<'a> {
+        let mut current = match self.next_char() {
             Some(v) => v,
             None => {
                 return Token {
@@ -59,7 +73,7 @@ impl Lex for Lexer<'_> {
         };
 
         while current.is_whitespace() {
-            current = match Self::next_char(text, cursor_index) {
+            current = match self.next_char() {
                 Some(v) => v,
                 None => {
                     return Token {
@@ -69,20 +83,50 @@ impl Lex for Lexer<'_> {
                 }
             }
         }
-        let slice_start = *cursor_index - 1;
+        let slice_start = self.cursor_index - 1;
+
+        if current == '"' {
+            current = match self.next_char() {
+                Some(v) => v,
+                None => {
+                    return Token {
+                        token_type: TokenType::Unknown,
+                        value: "",
+                    }
+                }
+            };
+
+            while current != '"' {
+                current = match self.next_char() {
+                    Some(v) => v,
+                    None => {
+                        return Token {
+                            token_type: TokenType::Unknown,
+                            value: "",
+                        }
+                    }
+                }
+            }
+            return Token {
+                token_type: TokenType::String,
+                value: &text[slice_start..self.cursor_index],
+            };
+        }
 
         if current.is_alphabetic() {
-            while Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
-                Self::next_char(text, cursor_index);
-                let current_string = &text[slice_start..*cursor_index];
-                if current_string.chars().last().unwrap_or_else(|| '\0') == '"' && current_string.chars().next().unwrap_or_else(|| '\0') == '"' {
+            while self.peek().is_some_and(|c| c.is_alphabetic()) {
+                self.next_char();
+                let current_string = &text[slice_start..self.cursor_index];
+                if current_string.chars().last().unwrap_or_else(|| '\0') == '"'
+                    && current_string.chars().next().unwrap_or_else(|| '\0') == '"'
+                {
                     return Token {
                         token_type: TokenType::String,
                         value: current_string,
-                    }
+                    };
                 }
                 if current_string == "LET" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::LET,
                             value: "LET",
@@ -90,7 +134,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "PRINT" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::PRINT,
                             value: "PRINT",
@@ -98,7 +142,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "IF" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::IF,
                             value: "IF",
@@ -106,7 +150,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "THEN" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::THEN,
                             value: "THEN",
@@ -114,7 +158,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "ENDIF" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::ENDIF,
                             value: "ENDIF",
@@ -122,7 +166,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "WHILE" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::WHILE,
                             value: "WHILE",
@@ -130,7 +174,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "REPEAT" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::REPEAT,
                             value: "REPEAT",
@@ -138,7 +182,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "ENDWHILE" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::ENDWHILE,
                             value: "ENDWHILE",
@@ -146,7 +190,7 @@ impl Lex for Lexer<'_> {
                     }
                 }
                 if current_string == "INPUT" {
-                    if !Self::peek(text, cursor_index).is_some_and(|c| c.is_alphabetic()) {
+                    if !self.peek().is_some_and(|c| c.is_alphabetic()) {
                         return Token {
                             token_type: TokenType::INPUT,
                             value: "INPUT",
@@ -156,22 +200,22 @@ impl Lex for Lexer<'_> {
             }
             return Token {
                 token_type: TokenType::Ident,
-                value: &text[slice_start..*cursor_index],
+                value: &text[slice_start..self.cursor_index],
             };
         }
 
         if current.is_digit(10) {
-            while Self::peek(text, cursor_index).is_some_and(|c| c.is_digit(10)) {
-                Self::next_char(text, cursor_index);
+            while self.peek().is_some_and(|c| c.is_digit(10)) {
+                self.next_char();
             }
             return Token {
                 token_type: TokenType::Number,
-                value: &text[slice_start..*cursor_index],
+                value: &text[slice_start..self.cursor_index],
             };
         }
 
         if current == '=' {
-            if Self::peek(text, cursor_index).is_some_and(|c| c == '=') {
+            if self.peek().is_some_and(|c| c == '=') {
                 return Token {
                     token_type: TokenType::Equals,
                     value: "==",
@@ -184,7 +228,7 @@ impl Lex for Lexer<'_> {
         }
 
         if current == '>' {
-            let next = Self::peek(text, cursor_index);
+            let next = self.peek();
             if next.is_some_and(|c| c == '=') {
                 return Token {
                     token_type: TokenType::GreaterEqual,
@@ -198,7 +242,7 @@ impl Lex for Lexer<'_> {
         }
 
         if current == '<' {
-            let next = Self::peek(text, cursor_index);
+            let next = self.peek();
             if next.is_some_and(|c| c == '=') {
                 return Token {
                     token_type: TokenType::LessEqual,
@@ -250,26 +294,5 @@ impl Lex for Lexer<'_> {
             token_type: TokenType::Unknown,
             value: "",
         }
-    }
-}
-
-impl Lexer<'_> {
-    pub fn new(file_text: &str) -> Lexer<'_> {
-        Lexer {
-            text: file_text,
-            cursor_index: 0,
-        }
-    }
-    fn next_char(text: &str, cursor_index: &mut usize) -> Option<char> {
-        let text_slice = &text[*cursor_index..];
-        let mut chars = text_slice.chars();
-        *cursor_index += 1;
-        chars.next()
-    }
-
-    fn peek(text: &str, cursor_index: &mut usize) -> Option<char> {
-        let text_slice = &text[*cursor_index..];
-        let mut chars = text_slice.chars();
-        chars.next()
     }
 }

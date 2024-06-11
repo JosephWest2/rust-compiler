@@ -3,20 +3,15 @@ use std::{
     io::{Error, Write},
 };
 
-pub trait Emit {
-    fn emit_to_buffer(&mut self, code: &str) -> ();
-    fn write_buffer_to_file(&self, file_name: &str) -> Result<(), Error>;
-}
-
 pub struct Emitter {
     output_buffer: String,
 }
 
-impl Emit for Emitter {
-    fn emit_to_buffer(&mut self, code: &str) {
+impl Emitter {
+    pub fn emit_to_buffer(&mut self, code: &str) {
         self.output_buffer.push_str(code);
     }
-    fn write_buffer_to_file(&self, file_name: &str) -> Result<(), Error> {
+    pub fn write_buffer_to_file(&self, file_name: &str) -> Result<(), Error> {
         let file = File::create(file_name);
         if file.is_err() {
             let err = file.unwrap_err();
@@ -31,10 +26,6 @@ impl Emit for Emitter {
         }
         return Ok(());
     }
-}
-
-
-impl Emitter {
     pub fn new() -> Self {
         Emitter {
             output_buffer: String::new(),

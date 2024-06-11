@@ -6,6 +6,8 @@ mod lexer;
 mod parser;
 mod emitter;
 
+use parser::Parser;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -28,8 +30,7 @@ fn main() {
         return;
     }
 
-    let mut lexer = lexer::Lexer::new(&text);
-    let mut emitter = emitter::Emitter::new();
-    let mut parser = parser::Parser::new(&mut emitter, &mut lexer);
-
+    let test_string = r#"Hello PRINT LET = + "ASDASD" 12783917823 ENDIF WHILE"#;
+    let mut parser = Parser::new(test_string);
+    parser.run();
 }
