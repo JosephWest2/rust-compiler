@@ -30,7 +30,7 @@ fn main() {
         return;
     }
 
-    let test_string = r#"Hello PRINT LET = + "ASDASD" 12783917823 ENDIF WHILE"#;
+    let test_string = r#"PRINT "hello there""#;
     let mut parser = Parser::new(test_string);
     parser.run();
 }

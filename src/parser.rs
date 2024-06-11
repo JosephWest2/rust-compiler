@@ -39,12 +39,20 @@ impl<'z> Parser<'z> {
         self.emitter.emit_to_buffer("int main(void) {\n");
         self.next_token();
 
+        if !self.token_begins_statement() {
+            eprintln!("expected expression start got {}", self.current_token.value);
+            panic!();
+        }
         while self.token_begins_statement() {
             self.statement();
         }
 
         self.emitter.emit_to_buffer("}\n");
-        self.emitter.write_buffer_to_file("OUTPUT.c");
+        let res = self.emitter.write_buffer_to_file("OUTPUT.c");
+        match res {
+            Ok(_o) => println!("file OUTPUT.c created successfully"),
+            Err(e) => eprintln!("Error {} creating output file", e),
+        }
     }
     fn token_begins_statement(&mut self) -> bool {
         match self.current_token.token_type {
