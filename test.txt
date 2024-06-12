@@ -1,1 +1,8 @@
-123123 IF ljkash THEN = + -
+PRINT "hello there"
+PRINT "whatsup"
+LET i = 10
+WHILE i < 20 REPEAT
+i = i + 1
+PRINT i
+ENDWHILE
+

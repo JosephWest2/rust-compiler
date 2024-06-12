@@ -30,7 +30,6 @@ fn main() {
         return;
     }
 
-    let test_string = r#"PRINT "hello there""#;
-    let mut parser = Parser::new(test_string);
+    let mut parser = Parser::new(&text);
     parser.run();
 }

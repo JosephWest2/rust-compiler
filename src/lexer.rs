@@ -72,7 +72,7 @@ impl<'z> Lexer<'z> {
             }
         };
 
-        while current.is_whitespace() {
+        while current.is_whitespace() && current != '\n' {
             current = match self.next_char() {
                 Some(v) => v,
                 None => {
@@ -251,7 +251,7 @@ impl<'z> Lexer<'z> {
             }
             return Token {
                 token_type: TokenType::Less,
-                value: ">",
+                value: "<",
             };
         }
 
